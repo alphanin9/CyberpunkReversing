@@ -11,3 +11,5 @@ Mostly made for personal use. Have some neat features and should work on Patch 2
 
 - Helps with reversing classes that have RTTI definition 
 - Renames them + their ctors + their vtables + their type object
+
+Credits to @cra0 for his RVA finder that I used as a "base" for hacking together the address hash helper.
