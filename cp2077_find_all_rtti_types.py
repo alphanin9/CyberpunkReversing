@@ -47,6 +47,13 @@ def rtti_func_xrefs_are_ok(func_ea):
     
     return True
 
+assigned_names = set()
+
+def cleanup_old_name(name):
+    addr = ida_name.get_name_ea(idaapi.BADADDR, name)
+    if addr != idaapi.BADADDR:
+        ida_name.del_global_name(addr)
+
 def process_ctor_call(call_ea):
     func = ida_funcs.get_func(call)
     if not func:
@@ -93,35 +100,42 @@ def process_ctor_call(call_ea):
                 xref_count = list(idautils.DataRefsTo(vtable_addr))
 
                 if len(xref_count) > 1:
-                    #print(f"VFT {ida_name.get_name(vtable_addr)} @ {vtable_addr:x} has too many xrefs, passing...")
-                    # Some VFTs have multiple xrefs with different types, kinda odd - maybe combine names for types then?
                     break
+                
+                assigned_vtable_name = class_rtti_typename + "::RTTI::vtbl"
 
-                vtable_name = ida_name.get_name(vtable_addr)
-
-                has_name = not vtable_name.startswith("off_")
+                has_name = not (assigned_vtable_name in assigned_names)
                 
                 if not has_name:
                     # Bring name to more or less spec, no point making more namespaces here I think
-                    vtable_name = class_rtti_typename + "::RTTI::vtbl"
-                    ida_name.set_name(vtable_addr, vtable_name)
+                    cleanup_old_name(assigned_vtable_name)
+                    ida_name.set_name(vtable_addr, assigned_vtable_name)
+                    assigned_names.add(assigned_vtable_name)
 
                 construct_class = ida_bytes.get_qword(vtable_addr + RTTI_CONSTRUCT_CLS_VTABLE_OFFSET)
                 destruct_class = ida_bytes.get_qword(vtable_addr + RTTI_DESTRUCT_CLS_VTABLE_OFFSET)
                 assign_class = ida_bytes.get_qword(vtable_addr + RTTI_ASSIGN_CLS_VTABLE_OFFSET)
 
                 # Most important things
-                if ida_funcs.get_func(construct_class) and ida_name.get_name(construct_class).startswith("sub_") and rtti_func_xrefs_are_ok(construct_class):
-                    ida_name.set_name(construct_class, vtable_name + "::ConstructCls")
-                    pass
 
-                if ida_funcs.get_func(destruct_class) and ida_name.get_name(destruct_class).startswith("sub_") and rtti_func_xrefs_are_ok(destruct_class):
-                    ida_name.set_name(destruct_class, vtable_name + "::DestructCls")
-                    pass
+                assigned_ctor_name = class_rtti_typename + "::ConstructCls"
+                assigned_dtor_name = class_rtti_typename + "::DestructCls"
+                assigned_copy_name = class_rtti_typename + "::Assign"
 
-                if ida_funcs.get_func(assign_class) and ida_name.get_name(assign_class).startswith("sub_") and rtti_func_xrefs_are_ok(assign_class):
-                    ida_name.set_name(assign_class, vtable_name + "::Assign")
-                    pass
+                if ida_funcs.get_func(construct_class) and not (assigned_ctor_name in assigned_names) and rtti_func_xrefs_are_ok(construct_class):
+                    cleanup_old_name(assigned_ctor_name)
+                    ida_name.set_name(construct_class, assigned_ctor_name)
+                    assigned_names.add(assigned_ctor_name)
+
+                if ida_funcs.get_func(destruct_class) and not (assigned_dtor_name in assigned_names) and rtti_func_xrefs_are_ok(destruct_class):
+                    cleanup_old_name(assigned_dtor_name)
+                    ida_name.set_name(destruct_class, assigned_dtor_name)
+                    assigned_names.add(assigned_dtor_name)
+
+                if ida_funcs.get_func(assign_class) and not (assigned_copy_name in assigned_names) and rtti_func_xrefs_are_ok(assign_class):
+                    cleanup_old_name(assigned_copy_name)
+                    ida_name.set_name(assign_class, assigned_copy_name)
+                    assigned_names.add(assigned_copy_name)
             break
 
     # mov qword_something, reg...
@@ -148,17 +162,23 @@ def process_ctor_call(call_ea):
                 if not second_insn or second_insn.itype != ida_allins.NN_retn:
                     continue
                 
-                if ida_name.get_name(xref).startswith("sub_"):
-                    ida_name.set_name(xref, class_rtti_typename + "::GetType")          
+                get_type_func_name = class_rtti_typename + "::GetType"
+
+                if not (get_type_func_name in assigned_names):
+                    cleanup_old_name(get_type_func_name)
+                    ida_name.set_name(xref, get_type_func_name)
+                    assigned_names.add(get_type_func_name)    
 
                 for func_xref in idautils.DataRefsTo(xref):
                     if ida_name.get_name(func_xref).startswith("off_"):
+                        cleanup_old_name(class_rtti_typename + "::vtbl")
                         # More hacky vtable getters!
                         ida_name.set_name(func_xref, class_rtti_typename + "::vtbl")
                 
                 # Rename type object as well, forgot to add that in first ver lol
                 if ida_name.get_name(insn.ops[0].addr).startswith("qword_"):
-                    ida_name.set_name(insn.ops[0].addr, class_rtti_typename, "::RTTI")
+                    cleanup_old_name(class_rtti_typename + "::RTTI")
+                    ida_name.set_name(insn.ops[0].addr, class_rtti_typename + "::RTTI")
 
                 return True    
     return True
