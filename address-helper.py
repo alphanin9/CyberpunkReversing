@@ -266,9 +266,10 @@ def build_address_cache():
             return
         
         with open(address_path) as file:
-            seg_code = ida_segment.get_segm_by_name(".text")
-            seg_rdata = ida_segment.get_segm_by_name(".rdata")
-            seg_data = ida_segment.get_segm_by_name(".data")
+            # Note: it being obsolete does not matter here! We'll be fine anyway
+            base_of_code = ida_segment.getnseg(1).start_ea
+            base_of_rdata = ida_segment.getnseg(2).start_ea
+            base_of_data = ida_segment.getnseg(3).start_ea
 
             # 1 = code
             # 2 = rdata
@@ -287,11 +288,11 @@ def build_address_cache():
                 final_addr = addrValue
 
                 if offset[0] == "0001":
-                    final_addr = addrValue + seg_code.start_ea
+                    final_addr = addrValue + base_of_code
                 elif offset[0] == "0002":
-                    final_addr = addrValue + seg_rdata.start_ea
+                    final_addr = addrValue + base_of_rdata
                 elif offset[0] == "0003":
-                    final_addr = addrValue + seg_data.start_ea
+                    final_addr = addrValue + base_of_data
 
                 # Maybe make a pass that renames autonamed functions with defined syms to their names in the .json...
 

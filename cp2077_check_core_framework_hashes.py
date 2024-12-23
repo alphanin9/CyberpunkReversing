@@ -1,5 +1,3 @@
-import idautils
-import ida_segment
 import idc
 
 import json
