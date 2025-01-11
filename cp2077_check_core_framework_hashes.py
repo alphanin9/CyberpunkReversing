@@ -7,6 +7,7 @@ import re
 import requests
 
 checked_mods = [
+    ("RED4ext", "https://raw.githubusercontent.com/wopss/RED4ext/refs/heads/master/src/dll/Detail/AddressHashes.hpp"),
     ("RED4ext.SDK", "https://raw.githubusercontent.com/wopss/RED4ext.SDK/refs/heads/master/include/RED4ext/Detail/AddressHashes.hpp"),
     ("ArchiveXL", "https://raw.githubusercontent.com/psiberx/cp2077-archive-xl/refs/heads/main/src/Red/Addresses/Library.hpp"),
     ("Codeware", "https://raw.githubusercontent.com/psiberx/cp2077-codeware/refs/heads/main/src/Red/Addresses/Library.hpp"),
