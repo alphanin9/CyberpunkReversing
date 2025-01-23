@@ -269,7 +269,7 @@ def build_address_cache():
             # Note: it being obsolete does not matter here! We'll be fine anyway
             base_of_code = ida_segment.getnseg(1).start_ea
             base_of_rdata = ida_segment.getnseg(2).start_ea
-            base_of_data = ida_segment.getnseg(3).start_ea
+            base_of_data = ida_segment.getnseg(4).start_ea
 
             # 1 = code
             # 2 = rdata
