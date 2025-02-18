@@ -55,14 +55,14 @@ def cleanup_old_name(name):
         ida_name.del_global_name(addr)
 
 def process_ctor_call(call_ea):
-    func = ida_funcs.get_func(call)
+    func = ida_funcs.get_func(call_ea)
     if not func:
         return False
     
     class_rtti_typename = ""
 
     for block in idaapi.FlowChart(func):
-        if block.start_ea <= call and block.end_ea >= call:
+        if block.start_ea <= call_ea and block.end_ea >= call_ea:
             first_inst_addr = next(idautils.Heads(block.start_ea, block.end_ea))
             if not first_inst_addr:
                 return False

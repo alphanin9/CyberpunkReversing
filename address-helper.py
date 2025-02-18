@@ -266,10 +266,14 @@ def build_address_cache():
             return
         
         with open(address_path) as file:
-            # Note: it being obsolete does not matter here! We'll be fine anyway
-            base_of_code = ida_segment.getnseg(1).start_ea
-            base_of_rdata = ida_segment.getnseg(2).start_ea
-            base_of_data = ida_segment.getnseg(4).start_ea
+            base_of_code = ida_segment.get_segm_by_name(".text").start_ea
+            base_of_data = ida_segment.get_segm_by_name(".data").start_ea
+            # Fix: IDA-generated imports segment messing things up
+            # Could also be fixed by parsing PE ourselves, but... why?
+            seg_rdata = ida_segment.get_segm_by_name(".idata")
+            if not seg_rdata:
+                seg_rdata = ida_segment.get_segm_by_name(".rdata")
+            base_of_rdata = seg_rdata.start_ea
 
             # 1 = code
             # 2 = rdata
