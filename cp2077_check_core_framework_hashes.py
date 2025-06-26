@@ -1,5 +1,3 @@
-import idc
-
 import json
 import os
 
@@ -24,11 +22,25 @@ hash_pattern = re.compile(".+ (.*) = (.+);")
 # We don't actually care about addy RVA I think, we just need to know if the address is present or not
 present_addresses = set()
 
-current_path = os.path.split(idc.get_idb_path())
-address_path = os.path.join(current_path[0], "cyberpunk2077_addresses.json")
+# If IDC can be imported, we're running in IDA and can guess the address path being next to IDB
+# If it can't, well, we can't guess
 
-if not os.path.exists(address_path):
-    raise "Failed to find address list! Are you sure you're reversing CP2077?"
+address_path = None
+
+try:
+    import idc
+    current_path = os.path.split(idc.get_idb_path())
+    address_path = os.path.join(current_path[0], "cyberpunk2077_addresses.json")
+    if not os.path.exists(address_path):
+        raise "Failed to find address list! Are you sure you're reversing CP2077?"
+except ImportError:
+    print("Falling back to user input!")
+    while not address_path:
+        user_path = input("Please enter the path to cyberpunk2077_addresses.json!")
+        if not os.path.exists(user_path):
+            print("Please enter a valid path!")
+            continue
+        address_path = user_path
 
 with open(address_path) as file:
     address_list_json = json.load(file)
