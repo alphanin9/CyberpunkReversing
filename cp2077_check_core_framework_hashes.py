@@ -36,7 +36,7 @@ try:
 except ImportError:
     print("Falling back to user input!")
     while not address_path:
-        user_path = input("Please enter the path to cyberpunk2077_addresses.json!")
+        user_path = input("Please enter the path to cyberpunk2077_addresses.json: ")
         if not os.path.exists(user_path):
             print("Please enter a valid path!")
             continue
